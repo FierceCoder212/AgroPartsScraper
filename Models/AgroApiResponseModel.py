@@ -15,8 +15,8 @@ class AdditionalPartListInfos(BaseModel):
     serialNumber: Optional[bool]
     successorPart: Optional[bool]
     wearpartStatus: Optional[bool]
-    informations: Optional[List[str]]
-    picture: Optional[List[str]]
+    informations: Optional[list[str]]
+    picture: Optional[list[str]]
 
 
 class Hotspot(BaseModel):
@@ -36,13 +36,14 @@ class Fields(BaseModel):
     expectedDelivery: Optional[str]
 
     def to_api_request_model(self, sgl_code: str, section: str, section_diagram_name: str, section_diagram_url: str):
+        print(sgl_code, section, self.partNumber, self.description, self.position, section_diagram_name, section_diagram_url)
         return ApiRequestModel(
             id=0,
             sglUniqueModelCode=sgl_code,
             section=section,
-            partNumber=self.partNumber,
-            description=self.description,
-            itemNumber=self.position,
+            partNumber=self.partNumber if self.partNumber else '',
+            description=self.description if self.description else '',
+            itemNumber=self.position if self.position else '',
             sectonDiagram=section_diagram_name,
             sectonDiagramUrl=section_diagram_url,
             scraperName='AgroParts'

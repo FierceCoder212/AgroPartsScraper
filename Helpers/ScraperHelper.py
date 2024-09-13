@@ -19,12 +19,29 @@ class ScraperHelper:
         self.base_img_url = 'https://www.agroparts.com/ip40_mtdbrand/imagedata?path={0}&request=GetImage&format={1}&bbox=0,0,{2},{3}&width={2}&height={3}&scalefac={4}&ticket=&cv=1'
         self.sql_helper = MSSqlHelper()
         self.images = []
+        self.headers = {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "cache-control": "max-age=0",
+            "cookie": "IP40SESSIONID=B239CF0934A4676446D9DD5736070CBB.PB0; AGROPARTSTOKEN=i4iYA4t5__-rcS37Ak-QEBE-E3bzyheF",
+            "priority": "u=0, i",
+            "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-site": "none",
+            "sec-fetch-user": "?1",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        }
 
     def start_scraper(self):
         for index, item in enumerate(self.input_model):
             print(f'On item-{index + 1} of {len(self.input_model)}')
             url, location = self._get_catalog_api_link(item)
-            response = requests.get(url)
+            response = requests.get(url, headers=self.headers)
             if response.status_code == 200:
                 part_group_model = PartGroupModel(**response.json())
                 for category_index, category in enumerate(part_group_model.entries):
@@ -37,7 +54,7 @@ class ScraperHelper:
         print('All items scraped successfully...')
 
     def _extract_parts_from_category(self, category: Entry, location: str, item: ScraperInputModel) -> list[dict]:
-        response = requests.get(self.base_url.format('/'.join([location, category.id])))
+        response = requests.get(self.base_url.format('/'.join([location, category.id])), headers=self.headers)
         if response.status_code == 200:
             return self._parts_to_api_request_model(item=item, category=category, parts_list=PartListModel(**response.json()).entries)
         return []
@@ -64,7 +81,7 @@ class ScraperHelper:
 
     def _get_img_url(self, parts_list: list[Entry]) -> str:
         if img_link_id := self._get_img_link_id(parts_list):
-            response = requests.get(self.img_data_base_url.format(img_link_id))
+            response = requests.get(self.img_data_base_url.format(img_link_id), headers=self.headers)
             if response.status_code == 200:
                 image_data_model = ImageModel(**response.json())
                 return self.base_img_url.format(img_link_id, image_data_model.imageFormat, image_data_model.imageWidth, image_data_model.imageHeight, image_data_model.maxScaleFactor)
