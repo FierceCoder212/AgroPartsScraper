@@ -38,7 +38,7 @@ class ScraperHelper:
         }
 
     def start_scraper(self):
-        for index, item in enumerate(self.input_model):
+        for index, item in enumerate(self.input_model[29:30]):
             print(f'On item-{index + 1} of {len(self.input_model)}')
             url, location = self._get_catalog_api_link(item)
             response = requests.get(url, headers=self.headers)
@@ -83,7 +83,8 @@ class ScraperHelper:
         if img_link_id := self._get_img_link_id(parts_list):
             response = requests.get(self.img_data_base_url.format(img_link_id), headers=self.headers)
             if response.status_code == 200:
-                image_data_model = ImageModel(**response.json())
+                response_json = json.loads(response.text.replace('\\', '\\\\'))
+                image_data_model = ImageModel(**response_json)
                 return self.base_img_url.format(img_link_id, image_data_model.imageFormat, image_data_model.imageWidth, image_data_model.imageHeight, image_data_model.maxScaleFactor)
         return ''
 
