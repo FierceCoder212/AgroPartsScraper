@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from typing import Optional
 
@@ -24,7 +25,7 @@ class ScraperHelper:
             "accept-encoding": "gzip, deflate, br, zstd",
             "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
             "cache-control": "max-age=0",
-            "cookie": "IP40SESSIONID=B239CF0934A4676446D9DD5736070CBB.PB0; AGROPARTSTOKEN=i4iYA4t5__-rcS37Ak-QEBE-E3bzyheF",
+            "cookie": os.getenv('COOKIE'),
             "priority": "u=0, i",
             "sec-ch-ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
             "sec-ch-ua-mobile": "?0",
@@ -38,14 +39,16 @@ class ScraperHelper:
         }
 
     def start_scraper(self):
-        for index, item in enumerate(self.input_model):
-            print(f'On item-{index + 1} of {len(self.input_model)}')
+        input_model = self.input_model[os.getenv('START_COUNT'):]
+        for index, item in enumerate(input_model):
+            print(f'On item-{index + 1} of {len(input_model)}, SGL : {item.SGL}')
             url, location = self._get_catalog_api_link(item)
             response = requests.get(url, headers=self.headers)
             if response.status_code == 200:
+                print(response.text)
                 part_group_model = PartGroupModel(**response.json())
                 for category_index, category in enumerate(part_group_model.entries):
-                    print(f'On item-{index + 1} of {len(self.input_model)}, Category-{category_index + 1} of {len(part_group_model.entries)}')
+                    print(f'SGL : {item.SGL}, On item-{index + 1} of {len(input_model)}, Category-{category_index + 1} of {len(part_group_model.entries)}')
                     api_request_models = self._extract_parts_from_category(category=category, location=location, item=item)
                     print(f'Saving models: {len(api_request_models)}')
                     self.sql_helper.insert_many_records(api_request_models)
