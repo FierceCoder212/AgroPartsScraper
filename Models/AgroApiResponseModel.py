@@ -36,7 +36,6 @@ class Fields(BaseModel):
     expectedDelivery: Optional[str]
 
     def to_api_request_model(self, sgl_code: str, section: str, section_diagram_name: str, section_diagram_url: str):
-        print(sgl_code, section, self.partNumber, self.description, self.position, section_diagram_name, section_diagram_url)
         return ApiRequestModel(
             id=0,
             sglUniqueModelCode=sgl_code,
