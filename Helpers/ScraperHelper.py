@@ -39,7 +39,7 @@ class ScraperHelper:
         }
 
     def start_scraper(self):
-        input_model = self.input_model[os.getenv('START_COUNT'):]
+        input_model = self.input_model[int(os.getenv('START_COUNT')):]
         for index, item in enumerate(input_model):
             print(f'On item-{index + 1} of {len(input_model)}, SGL : {item.SGL}')
             url, location = self._get_catalog_api_link(item)
