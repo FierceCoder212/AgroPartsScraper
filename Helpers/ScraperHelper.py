@@ -85,7 +85,7 @@ class ScraperHelper:
     def _get_img_url(self, parts_list: list[Entry]) -> str:
         if img_link_id := self._get_img_link_id(parts_list):
             response = requests.get(self.img_data_base_url.format(img_link_id), headers=self.headers)
-            if response.status_code == 200:
+            if response.status_code == 200 and 'Error' not in response.text:
                 response_json = json.loads(response.text.replace('\\', '\\\\'))
                 image_data_model = ImageModel(**response_json)
                 return self.base_img_url.format(img_link_id, image_data_model.imageFormat, image_data_model.imageWidth, image_data_model.imageHeight, image_data_model.maxScaleFactor)
