@@ -32,8 +32,6 @@ class ScraperHelper:
                     api_request_models = self._extract_parts_from_category(category=category, location=location, item=item)
                     print(f'Saving models: {len(api_request_models)}')
                     self.sql_helper.insert_many_records(api_request_models)
-                    break
-            break
         with open('ImagesData.json', 'w') as json_file:
             json_file.write(json.dumps(self.images, indent=4))
         print('All items scraped successfully...')
