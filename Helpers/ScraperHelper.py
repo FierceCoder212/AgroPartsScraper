@@ -38,7 +38,7 @@ class ScraperHelper:
         }
 
     def start_scraper(self):
-        for index, item in enumerate(self.input_model[29:30]):
+        for index, item in enumerate(self.input_model):
             print(f'On item-{index + 1} of {len(self.input_model)}')
             url, location = self._get_catalog_api_link(item)
             response = requests.get(url, headers=self.headers)
