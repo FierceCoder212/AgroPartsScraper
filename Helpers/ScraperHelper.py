@@ -1,8 +1,8 @@
 import json
 import os
 import re
-from typing import Optional
-
+import time
+from typing import Optional, Tuple
 import requests
 
 from Helpers.MSSQLHelper import MSSqlHelper
@@ -38,14 +38,30 @@ class ScraperHelper:
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         }
 
+    def make_request_with_retry(self, url: str) -> Optional[requests.Response]:
+        wait_time = 60
+        retries = 0
+
+        while True:
+            try:
+                response = requests.get(url, headers=self.headers)
+                if response.status_code == 200:
+                    return response
+                else:
+                    print(f"Failed request with status code {response.status_code}. Retrying in {wait_time // 60} minutes...")
+            except requests.exceptions.RequestException as e:
+                print(f"Request failed: {e}. Retrying in {wait_time // 60} minutes...")
+            time.sleep(wait_time)
+            wait_time += 60
+            retries += 1
+
     def start_scraper(self):
         input_model = self.input_model[int(os.getenv('START_COUNT')):]
         for index, item in enumerate(input_model):
             print(f'On item-{index + 1} of {len(input_model)}, SGL : {item.SGL}')
             url, location = self._get_catalog_api_link(item)
-            response = requests.get(url, headers=self.headers)
-            if response.status_code == 200:
-                print(response.text)
+            response = self.make_request_with_retry(url)
+            if response:
                 part_group_model = PartGroupModel(**response.json())
                 for category_index, category in enumerate(part_group_model.entries):
                     print(f'SGL : {item.SGL}, On item-{index + 1} of {len(input_model)}, Category-{category_index + 1} of {len(part_group_model.entries)}')
@@ -57,12 +73,12 @@ class ScraperHelper:
         print('All items scraped successfully...')
 
     def _extract_parts_from_category(self, category: Entry, location: str, item: ScraperInputModel) -> list[dict]:
-        response = requests.get(self.base_url.format('/'.join([location, category.id])), headers=self.headers)
-        if response.status_code == 200:
+        response = self.make_request_with_retry(self.base_url.format('/'.join([location, category.id])))
+        if response:
             return self._parts_to_api_request_model(item=item, category=category, parts_list=PartListModel(**response.json()).entries)
         return []
 
-    def _get_catalog_api_link(self, item: ScraperInputModel) -> [str, str]:
+    def _get_catalog_api_link(self, item: ScraperInputModel) -> Tuple[str, str]:
         location = item.CatalogLink.replace('https://www.agroparts.com/ip40_mtdbrand/#/filtergroup?location=', '')
         return self.base_url.format(location), location
 
@@ -84,8 +100,8 @@ class ScraperHelper:
 
     def _get_img_url(self, parts_list: list[Entry]) -> str:
         if img_link_id := self._get_img_link_id(parts_list):
-            response = requests.get(self.img_data_base_url.format(img_link_id), headers=self.headers)
-            if response.status_code == 200 and 'Error' not in response.text:
+            response = self.make_request_with_retry(self.img_data_base_url.format(img_link_id))
+            if response and 'Error' not in response.text:
                 response_json = json.loads(response.text.replace('\\', '\\\\'))
                 image_data_model = ImageModel(**response_json)
                 return self.base_img_url.format(img_link_id, image_data_model.imageFormat, image_data_model.imageWidth, image_data_model.imageHeight, image_data_model.maxScaleFactor)
