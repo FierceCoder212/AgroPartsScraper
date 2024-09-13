@@ -47,7 +47,6 @@ class ListingScraperHelper:
             'Year': year,
             'Link': f'https://www.agroparts.com/ip40_mtdbrand/#/filtergroup?location={location}'
         }
-        print(json.dumps(json_model, indent=4))
         self.listing_model_list.append(json_model)
 
     @staticmethod
